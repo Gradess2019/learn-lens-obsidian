@@ -3,6 +3,7 @@
     "baseUrl": ".",
     "inlineSourceMap": true,
     "inlineSources": true,
+    "allowSyntheticDefaultImports": true,
     "module": "ESNext",
     "target": "ES6",
     "allowJs": true,
@@ -10,7 +11,7 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "isolatedModules": true,
-	"strictNullChecks": true,
+    "strictNullChecks": true,
     "lib": [
       "DOM",
       "ES5",
