@@ -35,6 +35,19 @@ export class GraphNodeHelper {
     }
 
     static filterByType(nodes: IGraphNode[], type: NodeType): IGraphNode[] {
-        return nodes.filter((node) => node.type.startsWith(type));
+        return nodes.filter((node) => node.type === type);
     }
+
+    static generateLinksPayload(node: IGraphNode): { [key: string]: boolean } {
+        const links = node.forward;
+        const propertyNames = Object.keys(links) as string[];
+
+        const payload = {} as { [key: string]: boolean };
+        propertyNames.forEach((propertyName) => {
+            payload[propertyName] = true;
+        });
+
+        return payload;
+    }
+        
 }

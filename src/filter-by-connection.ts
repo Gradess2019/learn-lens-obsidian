@@ -1,6 +1,6 @@
 import BaseFilter from "./base-filter";
 import { App, Workspace } from "obsidian";
-import { GraphView } from "./core/graph-view";
+import { GraphView, ISetDataPayload } from "./core/graph-view";
 import { GraphNodeHelper, NodeType } from "./core/graph-node";
 
 
@@ -35,24 +35,26 @@ export default class FilterByConnectiobs extends BaseFilter {
                 if (value) {
                     this.filter();
                 }
+                else {
+                    this.graphView.view.dataEngine.render();
+                }
             });
         });
-
-        
     }
 
     filter(): void {
-        console.log(this.graphView.view.renderer.nodes);
-        let forward = GraphNodeHelper.getForward(this.graphView.view.renderer.nodes[1]);
-        let reverse = GraphNodeHelper.getReverse(this.graphView.view.renderer.nodes[1]);
+        let nodes = this.graphView.view.renderer.nodes;
+        let filteredNodes = GraphNodeHelper.filterByType(nodes, NodeType.DEFAULT);
 
-        // filter them
-        let forwardFiltered = GraphNodeHelper.filterByType(forward, NodeType.UNRESOLVED);
-        let reverseFiltered = GraphNodeHelper.filterByType(reverse, NodeType.UNRESOLVED);
-        console.log('Raw forward:', forward);
-        console.log('Filtered forward:', forwardFiltered);
-        console.log('Raw reverse:', reverse);
-        console.log('Filtered reverse:', reverseFiltered);
-        
+        let payload = { nodes: {} } as ISetDataPayload;
+
+        filteredNodes.forEach(node => {
+            payload.nodes[node.id] = {
+                type: node.type,
+                links: GraphNodeHelper.generateLinksPayload(node)
+            }
+        });
+
+        this.graphView.view.renderer.setData(payload);
     }
 }
