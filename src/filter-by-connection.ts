@@ -1,5 +1,5 @@
 import BaseFilter from "./base-filter";
-import { App, Workspace } from "obsidian";
+import { SliderComponent, ToggleComponent, Workspace } from "obsidian";
 import { GraphView, ISetDataPayload } from "./core/graph-view";
 import { GraphNodeHelper, NodeType } from "./core/graph-node";
 
@@ -9,6 +9,8 @@ import { GraphNodeHelper, NodeType } from "./core/graph-node";
 export default class FilterByConnectiobs extends BaseFilter {
     workspace: Workspace;
     graphView: GraphView;
+    slider: SliderComponent;
+    toggle: ToggleComponent;
 
     constructor(workspace: Workspace) {
         super();
@@ -18,20 +20,24 @@ export default class FilterByConnectiobs extends BaseFilter {
 
         this.setName('Connections');
         this.addSlider((slider) => {
-            slider.setLimits(1, 10, 1);
-            slider.setValue(3);
-            slider.setDynamicTooltip();
+            this.slider = slider;
+            this.slider.setLimits(1, 10, 1);
+            this.slider.setValue(3);
+            this.slider.setDynamicTooltip();
 
-            slider.onChange((value) => {
-                console.log(value);
+            this.slider.onChange((value) => {
+                if (this.toggle.getValue()) {
+                    this.filter();
+                }
             });
         });
 
         this.addToggle((toggle) => {
-            toggle.toggleEl.classList.add('mod-small');
-            toggle.setValue(false);
+            this.toggle = toggle;
+            this.toggle.toggleEl.classList.add('mod-small');
+            this.toggle.setValue(false);
 
-            toggle.onChange((value) => {
+            this.toggle.onChange((value) => {
                 if (value) {
                     this.filter();
                 }
@@ -44,14 +50,29 @@ export default class FilterByConnectiobs extends BaseFilter {
 
     filter(): void {
         let nodes = this.graphView.view.renderer.nodes;
-        let filteredNodes = GraphNodeHelper.filterByType(nodes, NodeType.DEFAULT);
+        let unresolvedNodes = GraphNodeHelper.filterByType(nodes, [NodeType.UNRESOLVED]);
+        let resolvedNodes = GraphNodeHelper.filterByType(nodes, [NodeType.DEFAULT, NodeType.TAG]);
 
         let payload = { nodes: {} } as ISetDataPayload;
 
-        filteredNodes.forEach(node => {
+        // include all resolvedNodes into payload
+        resolvedNodes.forEach(node => {
             payload.nodes[node.id] = {
                 type: node.type,
                 links: GraphNodeHelper.generateLinksPayload(node)
+            }
+        });
+
+        // get slider value
+        let minConnections = this.slider.getValue();
+
+        // include unresolvedNodes with more than min reverse connections into payload
+        unresolvedNodes.forEach(node => {
+            if (GraphNodeHelper.getReverse(node).length >= minConnections) {
+                payload.nodes[node.id] = {
+                    type: node.type,
+                    links: GraphNodeHelper.generateLinksPayload(node)
+                }
             }
         });
 

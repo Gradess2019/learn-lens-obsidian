@@ -34,8 +34,8 @@ export class GraphNodeHelper {
         return propertyNames.map((propertyName) => node.reverse[propertyName].source) as IGraphNode[];
     }
 
-    static filterByType(nodes: IGraphNode[], type: NodeType): IGraphNode[] {
-        return nodes.filter((node) => node.type === type);
+    static filterByType(nodes: IGraphNode[], types: NodeType[]): IGraphNode[] {
+        return nodes.filter((node) => types.includes(node.type as NodeType));
     }
 
     static generateLinksPayload(node: IGraphNode): { [key: string]: boolean } {
