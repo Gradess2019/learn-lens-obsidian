@@ -17,6 +17,12 @@ export interface IGraphNode {
     onClick(): void;
 }
 
+export interface IGraphLinksMetadata {
+    [key: string]: {
+        [key: string]: number;
+    }
+}
+
 export interface IGraphNodeTarget {
     source: IGraphNode;
     target: IGraphNode;

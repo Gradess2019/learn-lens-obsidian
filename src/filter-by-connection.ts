@@ -1,7 +1,7 @@
 import BaseFilter from "./base-filter";
 import { SliderComponent, ToggleComponent, Workspace } from "obsidian";
-import { GraphView, ISetDataPayload } from "./core/graph-view";
-import { GraphNodeHelper, NodeType } from "./core/graph-node";
+import { GraphView, MetadataCache } from "./core/graph-view";
+import { IGraphLinksMetadata } from "./core/graph-node";
 
 
 
@@ -26,9 +26,7 @@ export default class FilterByConnectiobs extends BaseFilter {
             this.slider.setDynamicTooltip();
 
             this.slider.onChange((value) => {
-                if (this.toggle.getValue()) {
-                    this.filter();
-                }
+                this.filter();
             });
         });
 
@@ -38,44 +36,55 @@ export default class FilterByConnectiobs extends BaseFilter {
             this.toggle.setValue(false);
 
             this.toggle.onChange((value) => {
-                if (value) {
-                    this.filter();
-                }
-                else {
-                    this.graphView.view.dataEngine.render();
-                }
+                this.filter();
             });
         });
     }
 
     filter(): void {
-        let nodes = this.graphView.view.renderer.nodes;
-        let unresolvedNodes = GraphNodeHelper.filterByType(nodes, [NodeType.UNRESOLVED]);
-        let resolvedNodes = GraphNodeHelper.filterByType(nodes, [NodeType.DEFAULT, NodeType.TAG]);
+        let metadataCache = this.graphView.view.app.metadataCache as MetadataCache;
+        let unresolvedLinks = { ...metadataCache.unresolvedLinks } as IGraphLinksMetadata;
 
-        let payload = { nodes: {} } as ISetDataPayload;
+        if (!metadataCache.hiddenLinks) {
+            metadataCache.hiddenLinks = {};
+        }
 
-        // include all resolvedNodes into payload
-        resolvedNodes.forEach(node => {
-            payload.nodes[node.id] = {
-                type: node.type,
-                links: GraphNodeHelper.generateLinksPayload(node)
-            }
-        });
+        for (let link in metadataCache.hiddenLinks) {
+            unresolvedLinks[link] = metadataCache.hiddenLinks[link];
+        }
 
-        // get slider value
-        let minConnections = this.slider.getValue();
-
-        // include unresolvedNodes with more than min reverse connections into payload
-        unresolvedNodes.forEach(node => {
-            if (GraphNodeHelper.getReverse(node).length >= minConnections) {
-                payload.nodes[node.id] = {
-                    type: node.type,
-                    links: GraphNodeHelper.generateLinksPayload(node)
+        let connectionsCounter = {} as { [key: string]: number };
+        for (let nodeMeta in unresolvedLinks) {
+            let nodeUnresolvedLinks = unresolvedLinks[nodeMeta];
+            for (let link in nodeUnresolvedLinks) {
+                if (link in connectionsCounter) {
+                    connectionsCounter[link]++;
+                }
+                else {
+                    connectionsCounter[link] = 1;
                 }
             }
-        });
+        }
 
-        this.graphView.view.renderer.setData(payload);
+        let minConnections = this.toggle.getValue() ? this.slider.getValue() : 1;
+        for (let nodeMeta in unresolvedLinks) {
+            let nodeUnresolvedLinks = unresolvedLinks[nodeMeta];
+            for (let link in nodeUnresolvedLinks) {
+                if (connectionsCounter[link] < minConnections) {
+
+                    if (!metadataCache.hiddenLinks[nodeMeta]) {
+                        metadataCache.hiddenLinks[nodeMeta] = {};
+                    }
+
+                    metadataCache.hiddenLinks[nodeMeta][link] = nodeUnresolvedLinks[link];
+                    delete metadataCache.unresolvedLinks[nodeMeta][link];
+                    continue;
+                }
+
+                metadataCache.unresolvedLinks[nodeMeta][link] = nodeUnresolvedLinks[link];
+            }
+        }
+
+        this.graphView.view.dataEngine.render();
     }
 }

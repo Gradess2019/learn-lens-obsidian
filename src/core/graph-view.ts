@@ -1,4 +1,4 @@
-import { WorkspaceLeaf } from "obsidian";
+import { App, WorkspaceLeaf } from "obsidian";
 import { IGraphNode } from "./graph-node"
 
 
@@ -13,8 +13,21 @@ export interface ISetDataPayload {
     }
 }
 
+export interface IMetadataCache {
+    hiddenLinks: {
+        [key: string]: {
+            [key: string]: number;
+        }
+    };
+    
+    getTags(): { [key: string]: number };
+}
+
+export type MetadataCache = App['metadataCache'] & IMetadataCache;
+
 export interface IGraphView {
     view: {
+        app: App;
         renderer: {
             nodes: IGraphNode[];
             worker: Worker;
