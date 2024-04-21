@@ -1,7 +1,7 @@
 import { log } from 'console';
 import { App, Editor, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import BaseFilter from 'src/base-filter';
 import FilterByConnections from './filter-by-connection';
+import BaseFilter from './base-filter';
 
 // Remember to rename these classes and interfaces!
 
