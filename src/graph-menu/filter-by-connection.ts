@@ -1,7 +1,7 @@
 import BaseFilter from "./base-filter";
 import { SliderComponent, ToggleComponent, Workspace } from "obsidian";
-import { GraphView, MetadataCache } from "./core/graph-view";
-import { IGraphLinksMetadata } from "./core/graph-node";
+import { GraphView, MetadataCache } from "../core/graph-view";
+import { IGraphLinksMetadata } from "../core/graph-node";
 
 
 
@@ -80,6 +80,10 @@ export default class FilterByConnections extends BaseFilter {
                 }
 
                 metadataCache.unresolvedLinks[nodeMeta][link] = nodeUnresolvedLinks[link];
+
+                if (metadataCache.hiddenLinks[nodeMeta] && metadataCache.hiddenLinks[nodeMeta][link]) {
+                    delete metadataCache.hiddenLinks[nodeMeta][link];
+                }
             }
         }
 
