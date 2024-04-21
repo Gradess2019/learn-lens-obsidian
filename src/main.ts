@@ -1,8 +1,9 @@
 import { log } from 'console';
 import { App, Editor, Modal, Plugin, PluginSettingTab, Setting, Workspace } from 'obsidian';
-import FilterByConnections from './filter-by-connection';
-import BaseFilter from './base-filter';
+import FilterByConnections from './graph-menu/filter-by-connection';
+import BaseFilter from './graph-menu/base-filter';
 import { GraphView } from './core/graph-view';
+import { GraphUnresolvedLinkRemover } from './graph-menu/graph-unresolved-link-remover';
 
 // Remember to rename these classes and interfaces!
 
@@ -13,7 +14,9 @@ export default class LearnLens extends Plugin {
 		this.app.workspace.onLayoutReady(() => {
 			let leafs = this.app.workspace.getLeavesOfType('graph') as GraphView[];
 			leafs.forEach(leaf => {
-				this.registerFilters(leaf);
+				if (!leaf.view.customFilters || leaf.view.customFilters.length == 0) {
+					this.registerFilters(leaf);
+				}
 			});
 		});
 
@@ -32,7 +35,7 @@ export default class LearnLens extends Plugin {
 	onLayoutChange(): void {
 		let leafs = this.app.workspace.getLeavesOfType('graph') as GraphView[];
 		leafs.forEach(leaf => {
-			if (!leaf.view.customFilters) {
+			if (!leaf.view.customFilters || leaf.view.customFilters.length == 0) {
 				this.registerFilters(leaf);
 			}
 		});
@@ -44,7 +47,10 @@ export default class LearnLens extends Plugin {
 		}
 
 		let unreasolvedFilter = new FilterByConnections(leaf);
-		leaf.view.customFilters = [unreasolvedFilter];		
+		let unresolvedLinkRemover = new GraphUnresolvedLinkRemover(leaf);
+
+		leaf.view.customFilters.push(unreasolvedFilter);
+		leaf.view.customFilters.push(unresolvedLinkRemover);
 	}
 
 	unregisterFilters(leaf: GraphView) {

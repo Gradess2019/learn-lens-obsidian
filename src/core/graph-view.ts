@@ -1,6 +1,6 @@
 import { App, WorkspaceLeaf } from "obsidian";
 import { IGraphNode } from "./graph-node"
-import BaseFilter from "src/base-filter";
+import BaseFilter from "src/graph-menu/base-filter";
 
 
 export interface ISetDataPayload {
@@ -33,11 +33,15 @@ export interface IGraphView {
             nodes: IGraphNode[];
             worker: Worker;
             setData: (data: ISetDataPayload) => void;
+            onNodeClick(): void;
+            onNodeHover(): void;
+            onNodeRightClick(): void;
+            onNodeUnhover(): void;
         }
         dataEngine: {
             render(): void;
         }
-        customFilters: BaseFilter[];
+        customFilters: any[];
     }
 }
 
