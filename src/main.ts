@@ -1,44 +1,58 @@
 import { log } from 'console';
-import { App, Editor, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import BaseFilter from 'src/base-filter';
+import { App, Editor, Modal, Plugin, PluginSettingTab, Setting, Workspace } from 'obsidian';
 import FilterByConnections from './filter-by-connection';
+import BaseFilter from './base-filter';
+import { GraphView } from './core/graph-view';
 
 // Remember to rename these classes and interfaces!
 
 export default class LearnLens extends Plugin {
 	newSettings: Setting;
-	nodeFilter: BaseFilter;
-
 
 	onload(): void {
 		this.app.workspace.onLayoutReady(() => {
-			this.nodeFilter = new FilterByConnections(this.app.workspace);
+			let leafs = this.app.workspace.getLeavesOfType('graph') as GraphView[];
+			leafs.forEach(leaf => {
+				this.registerFilters(leaf);
+			});
 		});
-		
-		
-		//const modFilter = document.querySelector('.mod-filter')?.querySelector('.tree-item-children') as HTMLElement;
-//
-		//this.newSettings = new Setting(modFilter)
-		//	.addToggle((toggle) => {
-		//		toggle.setValue(true);
-		//		toggle.onChange((value) => {
-		//			console.log(value);
-		//		});
-		//	})
-		//	.setName('More than');
-//
-		//this.newSettings.controlEl.querySelector('.checkbox-container')?.classList.add('mod-small');
-		//console.log(this.newSettings.controlEl.querySelector('.checkbox-container')?.classList);
-		
 
-
-		// console.log(this.newSettings.settingEl);
-		// console.log(this.newSettings.controlEl);
-
+		this.registerEvent(
+			this.app.workspace.on('layout-change', this.onLayoutChange.bind(this))
+		);
 	}
 
 	onunload(): void {
-		this.nodeFilter.delete();
+		let leafs = this.app.workspace.getLeavesOfType('graph') as GraphView[];
+		leafs.forEach(leaf => {
+			this.unregisterFilters(leaf);
+		});
+	}
+
+	onLayoutChange(): void {
+		let leafs = this.app.workspace.getLeavesOfType('graph') as GraphView[];
+		leafs.forEach(leaf => {
+			if (!leaf.view.customFilters) {
+				this.registerFilters(leaf);
+			}
+		});
+	}
+
+	registerFilters(leaf: GraphView) {
+		if (!leaf.view.customFilters) {
+			leaf.view.customFilters = [];
+		}
+
+		let unreasolvedFilter = new FilterByConnections(leaf);
+		leaf.view.customFilters = [unreasolvedFilter];		
+	}
+
+	unregisterFilters(leaf: GraphView) {
+		leaf.view.customFilters.forEach(filter => {
+			filter.delete();
+		});
+
+		leaf.view.customFilters = [];
 	}
 }
 

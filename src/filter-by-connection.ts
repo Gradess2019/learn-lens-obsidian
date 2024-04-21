@@ -6,17 +6,15 @@ import { IGraphLinksMetadata } from "./core/graph-node";
 
 
 
-export default class FilterByConnectiobs extends BaseFilter {
-    workspace: Workspace;
+export default class FilterByConnections extends BaseFilter {
     graphView: GraphView;
     slider: SliderComponent;
     toggle: ToggleComponent;
 
-    constructor(workspace: Workspace) {
-        super();
+    constructor(leaf: GraphView) {
+        super(leaf);
 
-        this.workspace = workspace;
-        this.graphView = this.workspace.getLeavesOfType('graph')[0] as GraphView;
+        this.graphView = leaf;
 
         this.setName('Connections');
         this.addSlider((slider) => {
