@@ -67,9 +67,7 @@ export class GraphUnresolvedLinkRemover extends GraphMenuItem {
         fileNames.forEach((fileName) => {
             let vault = this.leaf.view.app.vault;
             let files = vault.getMarkdownFiles();
-            console.log(files);
             let file = files.find((file) => file.name === fileName) as TFile;
-            console.log(file);
             
             vault.read(file).then((content) => {
                 let newContent = content.replace(new RegExp(`\\[\\[${nodeName}\\]\\]`, 'g'), nodeName);
